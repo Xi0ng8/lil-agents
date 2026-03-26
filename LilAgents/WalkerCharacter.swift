@@ -137,13 +137,13 @@ class WalkerCharacter {
         terminalView?.inputField.isEditable = false
         terminalView?.inputField.placeholderString = ""
         let welcome = """
-        hey! we're bruce and jazz — your lil dock agents.
+        \(NSLocalizedString("onboarding.title", comment: ""))
 
-        click either of us to open a Claude AI chat. we'll walk around while you work and let you know when Claude's thinking.
+        \(NSLocalizedString("onboarding.description", comment: ""))
 
-        check the menu bar icon (top right) for themes, sounds, and more options.
+        \(NSLocalizedString("onboarding.menuTip", comment: ""))
 
-        click anywhere outside to dismiss, then click us again to start chatting.
+        \(NSLocalizedString("onboarding.usage", comment: ""))
         """
         terminalView?.appendStreamingText(welcome)
         terminalView?.endStreaming()
@@ -364,7 +364,7 @@ class WalkerCharacter {
 
         session.onProcessExit = { [weak self] in
             self?.terminalView?.endStreaming()
-            self?.terminalView?.appendError("\(providerName) session ended.")
+            self?.terminalView?.appendError(String(format: NSLocalizedString("session.ended", comment: ""), providerName))
         }
     }
 
@@ -393,18 +393,26 @@ class WalkerCharacter {
 
     // MARK: - Thinking Bubble
 
-    private static let thinkingPhrases = [
-        "hmm...", "thinking...", "one sec...", "ok hold on",
-        "let me check", "working on it", "almost...", "bear with me",
-        "on it!", "gimme a sec", "brb", "processing...",
-        "hang tight", "just a moment", "figuring it out",
-        "crunching...", "reading...", "looking..."
+    private static let thinkingPhraseKeys: [String] = [
+        "thinking.hmm", "thinking.thinking", "thinking.oneSec", "thinking.okHoldOn",
+        "thinking.letMeCheck", "thinking.workingOnIt", "thinking.almost", "thinking.bearWithMe",
+        "thinking.onIt", "thinking.gimmeASec", "thinking.brb", "thinking.processing",
+        "thinking.hangTight", "thinking.justAMoment", "thinking.figuringItOut",
+        "thinking.crunching", "thinking.reading", "thinking.looking"
     ]
 
-    private static let completionPhrases = [
-        "done!", "all set!", "ready!", "here you go", "got it!",
-        "finished!", "ta-da!", "voila!"
+    private static let completionPhraseKeys: [String] = [
+        "completion.done", "completion.allSet", "completion.ready", "completion.hereYouGo", "completion.gotIt",
+        "completion.finished", "completion.taDa", "completion.voila"
     ]
+
+    private var localizedThinkingPhrases: [String] {
+        Self.thinkingPhraseKeys.map { NSLocalizedString($0, comment: "") }
+    }
+
+    private var localizedCompletionPhrases: [String] {
+        Self.completionPhraseKeys.map { NSLocalizedString($0, comment: "") }
+    }
 
     private var lastPhraseUpdate: CFTimeInterval = 0
     var currentPhrase = ""
@@ -520,9 +528,9 @@ class WalkerCharacter {
     private func updateThinkingPhrase() {
         let now = CACurrentMediaTime()
         if currentPhrase.isEmpty || now - lastPhraseUpdate > Double.random(in: 3.0...5.0) {
-            var next = Self.thinkingPhrases.randomElement() ?? "..."
-            while next == currentPhrase && Self.thinkingPhrases.count > 1 {
-                next = Self.thinkingPhrases.randomElement() ?? "..."
+            var next = localizedThinkingPhrases.randomElement() ?? "..."
+            while next == currentPhrase && localizedThinkingPhrases.count > 1 {
+                next = localizedThinkingPhrases.randomElement() ?? "..."
             }
             currentPhrase = next
             lastPhraseUpdate = now
@@ -530,7 +538,7 @@ class WalkerCharacter {
     }
 
     func showCompletionBubble() {
-        currentPhrase = Self.completionPhrases.randomElement() ?? "done!"
+        currentPhrase = localizedCompletionPhrases.randomElement() ?? "done!"
         showingCompletion = true
         completionBubbleExpiry = CACurrentMediaTime() + 3.0
         lastPhraseUpdate = 0

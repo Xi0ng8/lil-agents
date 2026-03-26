@@ -1,6 +1,7 @@
 import AppKit
 
 struct PopoverTheme {
+    let id: String
     let name: String
     // Popover
     let popoverBg: NSColor
@@ -35,7 +36,8 @@ struct PopoverTheme {
     // MARK: - Presets
 
     static let teenageEngineering = PopoverTheme(
-        name: "Midnight",
+        id: "midnight",
+        name: NSLocalizedString("theme.midnight", comment: "Midnight theme name"),
         popoverBg: NSColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 0.96),
         popoverBorder: NSColor(red: 1.0, green: 0.4, blue: 0.0, alpha: 0.7),
         popoverBorderWidth: 1.5,
@@ -64,7 +66,8 @@ struct PopoverTheme {
     )
 
     static let playful = PopoverTheme(
-        name: "Peach",
+        id: "peach",
+        name: NSLocalizedString("theme.peach", comment: "Peach theme name"),
         popoverBg: NSColor(red: 1.0, green: 0.97, blue: 0.92, alpha: 0.97),
         popoverBorder: NSColor(red: 0.95, green: 0.55, blue: 0.65, alpha: 0.8),
         popoverBorderWidth: 2.5,
@@ -93,7 +96,8 @@ struct PopoverTheme {
     )
 
     static let wii = PopoverTheme(
-        name: "Cloud",
+        id: "cloud",
+        name: NSLocalizedString("theme.cloud", comment: "Cloud theme name"),
         popoverBg: NSColor(red: 0.94, green: 0.95, blue: 0.96, alpha: 0.98),
         popoverBorder: NSColor(red: 0.78, green: 0.80, blue: 0.84, alpha: 0.6),
         popoverBorderWidth: 1,
@@ -122,7 +126,8 @@ struct PopoverTheme {
     )
 
     static let iPod = PopoverTheme(
-        name: "Moss",
+        id: "moss",
+        name: NSLocalizedString("theme.moss", comment: "Moss theme name"),
         popoverBg: NSColor(red: 0.82, green: 0.84, blue: 0.78, alpha: 0.98),
         popoverBorder: NSColor(red: 0.55, green: 0.58, blue: 0.50, alpha: 0.8),
         popoverBorderWidth: 2,
@@ -158,12 +163,12 @@ struct PopoverTheme {
     // MARK: - Theme Modifiers
 
     func withCharacterColor(_ color: NSColor) -> PopoverTheme {
-        guard name == "Peach" else { return self }
+        guard id == "peach" else { return self }
         let r = color.redComponent, g = color.greenComponent, b = color.blueComponent
         let light = NSColor(red: min(r + 0.4, 1), green: min(g + 0.4, 1), blue: min(b + 0.4, 1), alpha: 0.25)
         let border = NSColor(red: r, green: g, blue: b, alpha: 0.6)
         return PopoverTheme(
-            name: name, popoverBg: popoverBg,
+            id: id, name: name, popoverBg: popoverBg,
             popoverBorder: border,
             popoverBorderWidth: popoverBorderWidth, popoverCornerRadius: popoverCornerRadius,
             titleBarBg: NSColor(red: min(r * 0.3 + 0.7, 1), green: min(g * 0.3 + 0.7, 1), blue: min(b * 0.3 + 0.7, 1), alpha: 1.0),
@@ -184,13 +189,13 @@ struct PopoverTheme {
 
     func withCustomFont() -> PopoverTheme {
         // Midnight uses its own mono font — don't override
-        guard name != "Midnight" else { return self }
+        guard id != "midnight" else { return self }
         guard let fontName = PopoverTheme.customFontName,
               let baseFont = NSFont(name: fontName, size: PopoverTheme.customFontSize) else { return self }
         let boldFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .boldFontMask)
         let smallFont = NSFont(name: fontName, size: PopoverTheme.customFontSize - 1) ?? baseFont
         return PopoverTheme(
-            name: name, popoverBg: popoverBg, popoverBorder: popoverBorder,
+            id: id, name: name, popoverBg: popoverBg, popoverBorder: popoverBorder,
             popoverBorderWidth: popoverBorderWidth, popoverCornerRadius: popoverCornerRadius,
             titleBarBg: titleBarBg, titleText: titleText, titleFont: titleFont, titleFormat: titleFormat,
             separatorColor: separatorColor,

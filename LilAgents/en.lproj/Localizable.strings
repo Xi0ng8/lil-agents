@@ -1,0 +1,78 @@
+/* Menu items */
+"menu.bruce" = "Bruce";
+"menu.jazz" = "Jazz";
+"menu.sounds" = "Sounds";
+"menu.provider" = "Provider";
+"menu.style" = "Style";
+"menu.display" = "Display";
+"menu.autoMainDisplay" = "Auto (Main Display)";
+"menu.checkForUpdates" = "Check for Updates…";
+"menu.quit" = "Quit";
+
+/* Onboarding welcome message */
+"onboarding.title" = "hey! we're bruce and jazz — your lil dock agents.";
+"onboarding.description" = "click either of us to open a Claude AI chat. we'll walk around while you work and let you know when Claude's thinking.";
+"onboarding.menuTip" = "check the menu bar icon (top right) for themes, sounds, and more options.";
+"onboarding.usage" = "click anywhere outside to dismiss, then click us again to start chatting.";
+
+/* Thinking phrases */
+"thinking.hmm" = "hmm...";
+"thinking.thinking" = "thinking...";
+"thinking.oneSec" = "one sec...";
+"thinking.okHoldOn" = "ok hold on";
+"thinking.letMeCheck" = "let me check";
+"thinking.workingOnIt" = "working on it";
+"thinking.almost" = "almost...";
+"thinking.bearWithMe" = "bear with me";
+"thinking.onIt" = "on it!";
+"thinking.gimmeASec" = "gimme a sec";
+"thinking.brb" = "brb";
+"thinking.processing" = "processing...";
+"thinking.hangTight" = "hang tight";
+"thinking.justAMoment" = "just a moment";
+"thinking.figuringItOut" = "figuring it out";
+"thinking.crunching" = "crunching...";
+"thinking.reading" = "reading...";
+"thinking.looking" = "looking...";
+
+/* Completion phrases */
+"completion.done" = "done!";
+"completion.allSet" = "all set!";
+"completion.ready" = "ready!";
+"completion.hereYouGo" = "here you go";
+"completion.gotIt" = "got it!";
+"completion.finished" = "finished!";
+"completion.taDa" = "ta-da!";
+"completion.voila" = "voila!";
+
+/* Session messages */
+"session.ended" = "%@ session ended.";
+
+/* AgentSession - Provider display names */
+"provider.claude" = "Claude";
+"provider.codex" = "Codex";
+"provider.copilot" = "Copilot";
+
+/* AgentSession - Input placeholders */
+"input.placeholder.claude" = "Ask Claude...";
+"input.placeholder.codex" = "Ask Codex...";
+"input.placeholder.copilot" = "Ask Copilot...";
+
+/* AgentSession - Install instructions */
+"install.instructions.claude" = "To install, run this in Terminal:\n  curl -fsSL https://claude.ai/install.sh | sh\n\nOr download from https://claude.ai/download";
+"install.instructions.codex" = "To install, run this in Terminal:\n  npm install -g @openai/codex";
+"install.instructions.copilot" = "To install, run this in Terminal:\n  brew install copilot-cli\n\nOr: npm install -g @github/copilot-cli";
+
+/* Session error messages */
+"error.claude.not_found" = "Claude CLI not found.";
+"error.claude.launch_failed" = "Failed to launch Claude CLI.";
+"error.codex.not_found" = "Codex CLI not found.";
+"error.codex.launch_failed" = "Failed to launch Codex CLI";
+"error.copilot.not_found" = "Copilot CLI not found.";
+"error.copilot.launch_failed" = "Failed to launch Copilot CLI";
+
+/* Theme names */
+"theme.midnight" = "Midnight";
+"theme.peach" = "Peach";
+"theme.cloud" = "Cloud";
+"theme.moss" = "Moss";

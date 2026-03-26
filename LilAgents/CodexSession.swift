@@ -37,7 +37,7 @@ class CodexSession: AgentSession {
             "/opt/homebrew/bin/codex"
         ]) { [weak self] path in
             guard let self = self, let binaryPath = path else {
-                let msg = "Codex CLI not found.\n\n\(AgentProvider.codex.installInstructions)"
+                let msg = NSLocalizedString("error.codex.not_found", comment: "Codex CLI not found") + "\n\n\(AgentProvider.codex.installInstructions)"
                 self?.onError?(msg)
                 self?.history.append(AgentMessage(role: .error, text: msg))
                 return
@@ -117,7 +117,7 @@ class CodexSession: AgentSession {
             isFirstTurn = false
         } catch {
             isBusy = false
-            let msg = "Failed to launch Codex CLI: \(error.localizedDescription)"
+            let msg = NSLocalizedString("error.codex.launch_failed", comment: "Failed to launch Codex CLI") + ": \(error.localizedDescription)"
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
         }

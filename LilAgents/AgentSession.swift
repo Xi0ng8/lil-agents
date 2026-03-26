@@ -19,14 +19,18 @@ enum AgentProvider: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .claude:  return "Claude"
-        case .codex:   return "Codex"
-        case .copilot: return "Copilot"
+        case .claude:  return NSLocalizedString("provider.claude", comment: "Claude provider name")
+        case .codex:   return NSLocalizedString("provider.codex", comment: "Codex provider name")
+        case .copilot: return NSLocalizedString("provider.copilot", comment: "Copilot provider name")
         }
     }
 
     var inputPlaceholder: String {
-        "Ask \(displayName)..."
+        switch self {
+        case .claude:  return NSLocalizedString("input.placeholder.claude", comment: "Ask Claude...")
+        case .codex:   return NSLocalizedString("input.placeholder.codex", comment: "Ask Codex...")
+        case .copilot: return NSLocalizedString("input.placeholder.copilot", comment: "Ask Copilot...")
+        }
     }
 
     /// Returns provider name styled per theme format.
@@ -41,11 +45,11 @@ enum AgentProvider: String, CaseIterable {
     var installInstructions: String {
         switch self {
         case .claude:
-            return "To install, run this in Terminal:\n  curl -fsSL https://claude.ai/install.sh | sh\n\nOr download from https://claude.ai/download"
+            return NSLocalizedString("install.instructions.claude", comment: "Claude CLI install instructions")
         case .codex:
-            return "To install, run this in Terminal:\n  npm install -g @openai/codex"
+            return NSLocalizedString("install.instructions.codex", comment: "Codex CLI install instructions")
         case .copilot:
-            return "To install, run this in Terminal:\n  brew install copilot-cli\n\nOr: npm install -g @github/copilot-cli"
+            return NSLocalizedString("install.instructions.copilot", comment: "Copilot CLI install instructions")
         }
     }
 

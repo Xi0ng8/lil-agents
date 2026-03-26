@@ -43,7 +43,7 @@ class CopilotSession: AgentSession {
                 self.isRunning = true
                 self.onSessionReady?()
             } else {
-                let msg = "Copilot CLI not found.\n\n\(AgentProvider.copilot.installInstructions)"
+                let msg = NSLocalizedString("error.copilot.not_found", comment: "Copilot CLI not found") + "\n\n\(AgentProvider.copilot.installInstructions)"
                 self.onError?(msg)
                 self.history.append(AgentMessage(role: .error, text: msg))
             }
@@ -140,7 +140,7 @@ class CopilotSession: AgentSession {
             isFirstTurn = false
         } catch {
             isBusy = false
-            let msg = "Failed to launch Copilot CLI: \(error.localizedDescription)"
+            let msg = NSLocalizedString("error.copilot.launch_failed", comment: "Failed to launch Copilot CLI") + ": \(error.localizedDescription)"
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
         }

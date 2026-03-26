@@ -37,22 +37,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
 
-        let char1Item = NSMenuItem(title: "Bruce", action: #selector(toggleChar1), keyEquivalent: "1")
+        let char1Item = NSMenuItem(title: NSLocalizedString("menu.bruce", comment: ""), action: #selector(toggleChar1), keyEquivalent: "1")
         char1Item.state = .on
         menu.addItem(char1Item)
 
-        let char2Item = NSMenuItem(title: "Jazz", action: #selector(toggleChar2), keyEquivalent: "2")
+        let char2Item = NSMenuItem(title: NSLocalizedString("menu.jazz", comment: ""), action: #selector(toggleChar2), keyEquivalent: "2")
         char2Item.state = .on
         menu.addItem(char2Item)
 
         menu.addItem(NSMenuItem.separator())
 
-        let soundItem = NSMenuItem(title: "Sounds", action: #selector(toggleSounds(_:)), keyEquivalent: "")
+        let soundItem = NSMenuItem(title: NSLocalizedString("menu.sounds", comment: ""), action: #selector(toggleSounds(_:)), keyEquivalent: "")
         soundItem.state = .on
         menu.addItem(soundItem)
 
         // Provider submenu
-        let providerItem = NSMenuItem(title: "Provider", action: nil, keyEquivalent: "")
+        let providerItem = NSMenuItem(title: NSLocalizedString("menu.provider", comment: ""), action: nil, keyEquivalent: "")
         let providerMenu = NSMenu()
         for (i, provider) in AgentProvider.allCases.enumerated() {
             let item = NSMenuItem(title: provider.displayName, action: #selector(switchProvider(_:)), keyEquivalent: "")
@@ -64,7 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(providerItem)
 
         // Theme submenu
-        let themeItem = NSMenuItem(title: "Style", action: nil, keyEquivalent: "")
+        let themeItem = NSMenuItem(title: NSLocalizedString("menu.style", comment: ""), action: nil, keyEquivalent: "")
         let themeMenu = NSMenu()
         for (i, theme) in PopoverTheme.allThemes.enumerated() {
             let item = NSMenuItem(title: theme.name, action: #selector(switchTheme(_:)), keyEquivalent: "")
@@ -76,10 +76,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(themeItem)
 
         // Display submenu
-        let displayItem = NSMenuItem(title: "Display", action: nil, keyEquivalent: "")
+        let displayItem = NSMenuItem(title: NSLocalizedString("menu.display", comment: ""), action: nil, keyEquivalent: "")
         let displayMenu = NSMenu()
         displayMenu.delegate = self
-        let autoItem = NSMenuItem(title: "Auto (Main Display)", action: #selector(switchDisplay(_:)), keyEquivalent: "")
+        let autoItem = NSMenuItem(title: NSLocalizedString("menu.autoMainDisplay", comment: ""), action: #selector(switchDisplay(_:)), keyEquivalent: "")
         autoItem.tag = -1
         autoItem.state = .on
         displayMenu.addItem(autoItem)
@@ -96,13 +96,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        let updateItem = NSMenuItem(title: "Check for Updates…", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
+        let updateItem = NSMenuItem(title: NSLocalizedString("menu.checkForUpdates", comment: ""), action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
         updateItem.target = updaterController
         menu.addItem(updateItem)
 
         menu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: NSLocalizedString("menu.quit", comment: ""), action: #selector(quitApp), keyEquivalent: "q")
         menu.addItem(quitItem)
 
         statusItem?.menu = menu

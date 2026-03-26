@@ -1,0 +1,78 @@
+/* Menu items */
+"menu.bruce" = "Bruce";
+"menu.jazz" = "Jazz";
+"menu.sounds" = "声音";
+"menu.provider" = "AI 提供商";
+"menu.style" = "主题样式";
+"menu.display" = "显示";
+"menu.autoMainDisplay" = "自动（主显示器）";
+"menu.checkForUpdates" = "检查更新…";
+"menu.quit" = "退出";
+
+/* Onboarding welcome message */
+"onboarding.title" = "嘿！我是布鲁斯和杰兹 —— 你的桌面 Dock 智能助手。";
+"onboarding.description" = "点击我们中的任何一个来打开 Claude AI 聊天界面。我们会在你工作时四处走动，并在 Claude 思考时提醒你。";
+"onboarding.menuTip" = "点击菜单栏图标（右上角）可以切换主题、声音和更多选项。";
+"onboarding.usage" = "点击界面外部可退出对话，然后再次点击我们开始聊天。";
+
+/* Thinking phrases */
+"thinking.hmm" = "嗯…";
+"thinking.thinking" = "思考中…";
+"thinking.oneSec" = "稍等…";
+"thinking.okHoldOn" = "好的，等等";
+"thinking.letMeCheck" = "让我看看";
+"thinking.workingOnIt" = "处理中";
+"thinking.almost" = "快好了…";
+"thinking.bearWithMe" = "稍安勿躁";
+"thinking.onIt" = "开始处理！";
+"thinking.gimmeASec" = "马上好";
+"thinking.brb" = "马上回来";
+"thinking.processing" = "处理中…";
+"thinking.hangTight" = "稍候";
+"thinking.justAMoment" = "马上就好";
+"thinking.figuringItOut" = "思考中…";
+"thinking.crunching" = "处理中…";
+"thinking.reading" = "读取中…";
+"thinking.looking" = "查找中…";
+
+/* Completion phrases */
+"completion.done" = "完成！";
+"completion.allSet" = "好了！";
+"completion.ready" = "好了！";
+"completion.hereYouGo" = "给你";
+"completion.gotIt" = "收到了！";
+"completion.finished" = "完成了！";
+"completion.taDa" = "搞定！";
+"completion.voila" = "完成！";
+
+/* Session messages */
+"session.ended" = "%@ 会话已结束。";
+
+/* AgentSession - Provider display names */
+"provider.claude" = "Claude";
+"provider.codex" = "Codex";
+"provider.copilot" = "Copilot";
+
+/* AgentSession - Input placeholders */
+"input.placeholder.claude" = "询问 Claude…";
+"input.placeholder.codex" = "询问 Codex…";
+"input.placeholder.copilot" = "询问 Copilot…";
+
+/* AgentSession - Install instructions */
+"install.instructions.claude" = "在终端中运行以下命令安装：\n  curl -fsSL https://claude.ai/install.sh | sh\n\n或从 https://claude.ai/download 下载";
+"install.instructions.codex" = "在终端中运行以下命令安装：\n  npm install -g @openai/codex";
+"install.instructions.copilot" = "在终端中运行以下命令安装：\n  brew install copilot-cli\n\n或：npm install -g @github/copilot-cli";
+
+/* Session error messages */
+"error.claude.not_found" = "未找到 Claude CLI。";
+"error.claude.launch_failed" = "启动 Claude CLI 失败。";
+"error.codex.not_found" = "未找到 Codex CLI。";
+"error.codex.launch_failed" = "启动 Codex CLI 失败";
+"error.copilot.not_found" = "未找到 Copilot CLI。";
+"error.copilot.launch_failed" = "启动 Copilot CLI 失败";
+
+/* Theme names */
+"theme.midnight" = "午夜";
+"theme.peach" = "蜜桃";
+"theme.cloud" = "云朵";
+"theme.moss" = "青苔";

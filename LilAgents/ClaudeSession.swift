@@ -36,7 +36,7 @@ class ClaudeSession: AgentSession {
             "/opt/homebrew/bin/claude"
         ]) { [weak self] path in
             guard let self = self, let binaryPath = path else {
-                let msg = "Claude CLI not found.\n\n\(AgentProvider.claude.installInstructions)"
+                let msg = NSLocalizedString("error.claude.not_found", comment: "Claude CLI not found") + "\n\n\(AgentProvider.claude.installInstructions)"
                 self?.onError?(msg)
                 self?.history.append(AgentMessage(role: .error, text: msg))
                 return
@@ -102,7 +102,7 @@ class ClaudeSession: AgentSession {
             errorPipe = errPipe
             isRunning = true
         } catch {
-            let msg = "Failed to launch Claude CLI.\n\n\(AgentProvider.claude.installInstructions)\n\nError: \(error.localizedDescription)"
+            let msg = NSLocalizedString("error.claude.launch_failed", comment: "Failed to launch Claude CLI") + "\n\n\(AgentProvider.claude.installInstructions)\n\nError: \(error.localizedDescription)"
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
         }
