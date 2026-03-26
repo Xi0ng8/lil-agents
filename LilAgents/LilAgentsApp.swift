@@ -180,12 +180,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func switchDisplay(_ sender: NSMenuItem) {
         let idx = sender.tag
         controller?.pinnedScreenIndex = idx
-
-        if let displayMenu = sender.menu {
-            for item in displayMenu.items {
-                item.state = item.tag == idx ? .on : .off
-            }
-        }
     }
 
     @objc func toggleChar1(_ sender: NSMenuItem) {
