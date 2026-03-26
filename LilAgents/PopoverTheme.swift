@@ -35,7 +35,7 @@ struct PopoverTheme {
 
     // MARK: - Presets
 
-    static let teenageEngineering = PopoverTheme(
+    static let midnight = PopoverTheme(
         id: "midnight",
         name: NSLocalizedString("theme.midnight", comment: "Midnight theme name"),
         popoverBg: NSColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 0.96),
@@ -65,7 +65,7 @@ struct PopoverTheme {
         bubbleCornerRadius: 12
     )
 
-    static let playful = PopoverTheme(
+    static let peach = PopoverTheme(
         id: "peach",
         name: NSLocalizedString("theme.peach", comment: "Peach theme name"),
         popoverBg: NSColor(red: 1.0, green: 0.97, blue: 0.92, alpha: 0.97),
@@ -95,7 +95,7 @@ struct PopoverTheme {
         bubbleCornerRadius: 14
     )
 
-    static let wii = PopoverTheme(
+    static let cloud = PopoverTheme(
         id: "cloud",
         name: NSLocalizedString("theme.cloud", comment: "Cloud theme name"),
         popoverBg: NSColor(red: 0.94, green: 0.95, blue: 0.96, alpha: 0.98),
@@ -125,7 +125,7 @@ struct PopoverTheme {
         bubbleCornerRadius: 12
     )
 
-    static let iPod = PopoverTheme(
+    static let moss = PopoverTheme(
         id: "moss",
         name: NSLocalizedString("theme.moss", comment: "Moss theme name"),
         popoverBg: NSColor(red: 0.82, green: 0.84, blue: 0.78, alpha: 0.98),
@@ -155,8 +155,21 @@ struct PopoverTheme {
         bubbleCornerRadius: 8
     )
 
-    static let allThemes: [PopoverTheme] = [.playful, .teenageEngineering, .wii, .iPod]
-    static var current: PopoverTheme = .playful
+    static let allThemes: [PopoverTheme] = [.peach, .midnight, .cloud, .moss]
+    private static let selectedThemeKey = "selectedTheme"
+
+    static var current: PopoverTheme {
+        get {
+            let idx = UserDefaults.standard.integer(forKey: selectedThemeKey)
+            guard idx >= 0 && idx < allThemes.count else { return .peach }
+            return allThemes[idx]
+        }
+        set {
+            if let idx = allThemes.firstIndex(where: { $0.id == newValue.id }) {
+                UserDefaults.standard.set(idx, forKey: selectedThemeKey)
+            }
+        }
+    }
     static var customFontName: String? = ".AppleSystemUIFontRounded"
     static var customFontSize: CGFloat = 13
 

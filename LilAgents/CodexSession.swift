@@ -1,151 +1,48 @@
 import Foundation
 
-class CodexSession: AgentSession {
-    private var process: Process?
-    private var outputPipe: Pipe?
-    private var errorPipe: Pipe?
-    private var lineBuffer = ""
-    private(set) var isRunning = false
-    private(set) var isBusy = false
+class CodexSession: BaseAgentSession {
     private var isFirstTurn = true
-    private static var binaryPath: String?
 
-    var onText: ((String) -> Void)?
-    var onError: ((String) -> Void)?
-    var onToolUse: ((String, [String: Any]) -> Void)?
-    var onToolResult: ((String, Bool) -> Void)?
-    var onSessionReady: (() -> Void)?
-    var onTurnComplete: (() -> Void)?
-    var onProcessExit: (() -> Void)?
+    override func findBinaryName() -> String { "codex" }
 
-    var history: [AgentMessage] = []
-
-    // MARK: - Lifecycle
-
-    func start() {
-        if let cached = Self.binaryPath {
-            isRunning = true
-            onSessionReady?()
-            return
-        }
-
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        ShellEnvironment.findBinary(name: "codex", fallbackPaths: [
+    override func findBinaryFallbackPaths(home: String) -> [String] {
+        [
             "\(home)/.local/bin/codex",
             "\(home)/.npm-global/bin/codex",
             "/usr/local/bin/codex",
             "/opt/homebrew/bin/codex"
-        ]) { [weak self] path in
-            guard let self = self, let binaryPath = path else {
-                let msg = NSLocalizedString("error.codex.not_found", comment: "Codex CLI not found") + "\n\n\(AgentProvider.codex.installInstructions)"
-                self?.onError?(msg)
-                self?.history.append(AgentMessage(role: .error, text: msg))
-                return
-            }
-            Self.binaryPath = binaryPath
-            self.isRunning = true
-            self.onSessionReady?()
-        }
+        ]
     }
 
-    func send(message: String) {
-        guard isRunning, let binaryPath = Self.binaryPath else { return }
-        isBusy = true
-        history.append(AgentMessage(role: .user, text: message))
-        lineBuffer = ""
+    override func findBinaryErrorKey() -> String { "error.codex.not_found" }
 
-        let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: binaryPath)
+    override func installInstructions() -> String { AgentProvider.codex.installInstructions }
 
-        if isFirstTurn {
-            proc.arguments = ["exec", "--json", "--full-auto", "--skip-git-repo-check", message]
-        } else {
-            proc.arguments = ["exec", "resume", "--last", "--json", "--full-auto", "--skip-git-repo-check", message]
-        }
-
-        proc.currentDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
+    override func configureProcess(_ proc: Process) {
         proc.environment = ShellEnvironment.processEnvironment(extraPaths: [
             FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".npm-global/bin").path
         ])
+    }
 
-        let outPipe = Pipe()
-        let errPipe = Pipe()
-        proc.standardOutput = outPipe
-        proc.standardError = errPipe
+    override func postProcessLaunch() {
+        isFirstTurn = false
+    }
 
-        proc.terminationHandler = { [weak self] p in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.process = nil
-                // Flush remaining buffer
-                if !self.lineBuffer.isEmpty {
-                    self.parseLine(self.lineBuffer)
-                    self.lineBuffer = ""
-                }
-                if self.isBusy {
-                    self.isBusy = false
-                    self.onTurnComplete?()
-                }
-            }
-        }
-
-        outPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            if let text = String(data: data, encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self?.processOutput(text)
-                }
-            }
-        }
-
-        errPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            if let text = String(data: data, encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self?.onError?(text)
-                }
-            }
-        }
-
-        do {
-            try proc.run()
-            process = proc
-            outputPipe = outPipe
-            errorPipe = errPipe
-            isFirstTurn = false
-        } catch {
-            isBusy = false
-            let msg = NSLocalizedString("error.codex.launch_failed", comment: "Failed to launch Codex CLI") + ": \(error.localizedDescription)"
-            onError?(msg)
-            history.append(AgentMessage(role: .error, text: msg))
+    override func buildArguments(message: String, resuming: Bool) -> [String] {
+        if isFirstTurn {
+            return ["exec", "--json", "--full-auto", "--skip-git-repo-check", message]
+        } else {
+            return ["exec", "resume", "--last", "--json", "--full-auto", "--skip-git-repo-check", message]
         }
     }
 
-    func terminate() {
-        outputPipe?.fileHandleForReading.readabilityHandler = nil
-        errorPipe?.fileHandleForReading.readabilityHandler = nil
-        process?.terminate()
-        process = nil
-        isRunning = false
-        isBusy = false
+    override func launchFailedMessage(error: Error) -> String {
+        NSLocalizedString("error.codex.launch_failed", comment: "") + ": \(error.localizedDescription)"
     }
 
     // MARK: - JSONL Parsing
 
-    private func processOutput(_ text: String) {
-        lineBuffer += text
-        while let newlineRange = lineBuffer.range(of: "\n") {
-            let line = String(lineBuffer[lineBuffer.startIndex..<newlineRange.lowerBound])
-            lineBuffer = String(lineBuffer[newlineRange.upperBound...])
-            if !line.isEmpty {
-                parseLine(line)
-            }
-        }
-    }
-
-    private func parseLine(_ line: String) {
+    override func parseLine(_ line: String) {
         guard let data = line.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
 
@@ -153,7 +50,7 @@ class CodexSession: AgentSession {
 
         switch type {
         case "thread.started":
-            break // session tracking handled by codex internally
+            break
 
         case "item.started":
             if let item = json["item"] as? [String: Any] {
@@ -199,13 +96,13 @@ class CodexSession: AgentSession {
 
         case "turn.failed":
             isBusy = false
-            let msg = json["message"] as? String ?? "Turn failed"
+            let msg = json["message"] as? String ?? NSLocalizedString("error.codex.turn_failed", comment: "")
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
             onTurnComplete?()
 
         case "error":
-            let msg = json["message"] as? String ?? json["error"] as? String ?? "Unknown error"
+            let msg = json["message"] as? String ?? json["error"] as? String ?? NSLocalizedString("error.unknown", comment: "")
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
 

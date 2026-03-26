@@ -2,6 +2,23 @@ import AVFoundation
 import AppKit
 
 class WalkerCharacter {
+    // MARK: - Layout Constants
+
+    private enum Layout {
+        static let popoverWidth: CGFloat = 420
+        static let popoverHeight: CGFloat = 310
+        static let bottomPaddingRatio: CGFloat = 0.15
+        static let bubblePadding: CGFloat = 16
+        static let minSpacing: CGFloat = 0.12
+        static let titleBarHeight: CGFloat = 28
+        static let separatorHeight: CGFloat = 29
+        static let screenEdgePadding: CGFloat = 4
+        static let popoverVerticalOffset: CGFloat = 15
+        static let bubbleVerticalRatio: CGFloat = 0.88
+        static let completionBubbleDuration: CFTimeInterval = 3.0
+        static let pauseRange: ClosedRange<Double> = 5.0...12.0
+    }
+
     let videoName: String
     var window: NSWindow!
     var playerLayer: AVPlayerLayer!
@@ -76,9 +93,9 @@ class WalkerCharacter {
         playerLayer.backgroundColor = NSColor.clear.cgColor
         playerLayer.frame = CGRect(x: 0, y: 0, width: displayWidth, height: displayHeight)
 
-        let screen = NSScreen.main!
+        guard let screen = NSScreen.main else { return }
         let dockTopY = screen.visibleFrame.origin.y
-        let bottomPadding = displayHeight * 0.15
+        let bottomPadding = displayHeight * Layout.bottomPaddingRatio
         let y = dockTopY - bottomPadding + yOffset
 
         let contentRect = CGRect(x: 0, y: y, width: displayWidth, height: displayHeight)
@@ -152,8 +169,13 @@ class WalkerCharacter {
         popoverWindow?.orderFrontRegardless()
 
         // Set up click-outside to dismiss and complete onboarding
-        clickOutsideMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
-            self?.closeOnboarding()
+        clickOutsideMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, let popover = self.popoverWindow else { return }
+            let popoverFrame = popover.frame
+            let charFrame = self.window.frame
+            if !popoverFrame.contains(NSEvent.mouseLocation) && !charFrame.contains(NSEvent.mouseLocation) {
+                self.closeOnboarding()
+            }
         }
         escapeKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 { self?.closeOnboarding(); return nil }
@@ -196,7 +218,8 @@ class WalkerCharacter {
         if session == nil {
             let newSession = AgentProvider.current.createSession()
             session = newSession
-            wireSession(newSession)
+            let providerName = AgentProvider.current.displayName
+            wireSession(newSession, providerName: providerName)
             newSession.start()
         }
 
@@ -248,8 +271,8 @@ class WalkerCharacter {
         // If still waiting for a response, show thinking bubble immediately
         // If completion came while popover was open, show completion bubble
         if showingCompletion {
-            // Reset expiry so user gets the full 3s from now
-            completionBubbleExpiry = CACurrentMediaTime() + 3.0
+            // Reset expiry so user gets the full duration from now
+            completionBubbleExpiry = CACurrentMediaTime() + Layout.completionBubbleDuration
             showBubble(text: currentPhrase, isCompletion: true)
         } else if isAgentBusy {
             // Force a fresh phrase pick and show immediately
@@ -280,8 +303,8 @@ class WalkerCharacter {
 
     func createPopoverWindow() {
         let t = resolvedTheme
-        let popoverWidth: CGFloat = 420
-        let popoverHeight: CGFloat = 310
+        let popoverWidth = Layout.popoverWidth
+        let popoverHeight = Layout.popoverHeight
 
         let win = KeyableWindow(
             contentRect: CGRect(x: 0, y: 0, width: popoverWidth, height: popoverHeight),
@@ -306,7 +329,7 @@ class WalkerCharacter {
         container.layer?.borderColor = t.popoverBorder.cgColor
         container.autoresizingMask = [.width, .height]
 
-        let titleBar = NSView(frame: NSRect(x: 0, y: popoverHeight - 28, width: popoverWidth, height: 28))
+        let titleBar = NSView(frame: NSRect(x: 0, y: popoverHeight - Layout.titleBarHeight, width: popoverWidth, height: Layout.titleBarHeight))
         titleBar.wantsLayer = true
         titleBar.layer?.backgroundColor = t.titleBarBg.cgColor
         container.addSubview(titleBar)
@@ -317,12 +340,12 @@ class WalkerCharacter {
         titleLabel.frame = NSRect(x: 12, y: 6, width: 200, height: 16)
         titleBar.addSubview(titleLabel)
 
-        let sep = NSView(frame: NSRect(x: 0, y: popoverHeight - 29, width: popoverWidth, height: 1))
+        let sep = NSView(frame: NSRect(x: 0, y: popoverHeight - Layout.separatorHeight, width: popoverWidth, height: 1))
         sep.wantsLayer = true
         sep.layer?.backgroundColor = t.separatorColor.cgColor
         container.addSubview(sep)
 
-        let terminal = TerminalView(frame: NSRect(x: 0, y: 0, width: popoverWidth, height: popoverHeight - 29))
+        let terminal = TerminalView(frame: NSRect(x: 0, y: 0, width: popoverWidth, height: popoverHeight - Layout.separatorHeight))
         terminal.characterColor = characterColor
         terminal.themeOverride = themeOverride
         terminal.autoresizingMask = [.width, .height]
@@ -336,7 +359,7 @@ class WalkerCharacter {
         terminalView = terminal
     }
 
-    private func wireSession(_ session: any AgentSession, providerName: String = AgentProvider.current.displayName) {
+    private func wireSession(_ session: any AgentSession, providerName: String) {
         session.onText = { [weak self] text in
             self?.currentStreamingText += text
             self?.terminalView?.appendStreamingText(text)
@@ -382,11 +405,11 @@ class WalkerCharacter {
         let charFrame = window.frame
         let popoverSize = popover.frame.size
         var x = charFrame.midX - popoverSize.width / 2
-        let y = charFrame.maxY - 15
+        let y = charFrame.maxY - Layout.popoverVerticalOffset
 
         let screenFrame = screen.frame
-        x = max(screenFrame.minX + 4, min(x, screenFrame.maxX - popoverSize.width - 4))
-        let clampedY = min(y, screenFrame.maxY - popoverSize.height - 4)
+        x = max(screenFrame.minX + Layout.screenEdgePadding, min(x, screenFrame.maxX - popoverSize.width - Layout.screenEdgePadding))
+        let clampedY = min(y, screenFrame.maxY - popoverSize.height - Layout.screenEdgePadding)
 
         popover.setFrameOrigin(NSPoint(x: x, y: clampedY))
     }
@@ -406,13 +429,13 @@ class WalkerCharacter {
         "completion.finished", "completion.taDa", "completion.voila"
     ]
 
-    private var localizedThinkingPhrases: [String] {
+    private lazy var localizedThinkingPhrases: [String] = {
         Self.thinkingPhraseKeys.map { NSLocalizedString($0, comment: "") }
-    }
+    }()
 
-    private var localizedCompletionPhrases: [String] {
+    private lazy var localizedCompletionPhrases: [String] = {
         Self.completionPhraseKeys.map { NSLocalizedString($0, comment: "") }
-    }
+    }()
 
     private var lastPhraseUpdate: CFTimeInterval = 0
     var currentPhrase = ""
@@ -491,14 +514,14 @@ class WalkerCharacter {
         }
 
         let h = Self.bubbleH
-        let padding: CGFloat = 16
+        let padding = Layout.bubblePadding
         let font = t.bubbleFont
         let textSize = (text as NSString).size(withAttributes: [.font: font])
         let bubbleW = max(ceil(textSize.width) + padding * 2, 48)
 
         let charFrame = window.frame
         let x = charFrame.midX - bubbleW / 2
-        let y = charFrame.origin.y + charFrame.height * 0.88
+        let y = charFrame.origin.y + charFrame.height * Layout.bubbleVerticalRatio
         thinkingBubbleWindow?.setFrame(CGRect(x: x, y: y, width: bubbleW, height: h), display: false)
 
         let borderColor = isCompletion ? t.bubbleCompletionBorder.cgColor : t.bubbleBorder.cgColor
@@ -525,12 +548,12 @@ class WalkerCharacter {
         }
     }
 
-    private func updateThinkingPhrase() {
+    func updateThinkingPhrase() {
         let now = CACurrentMediaTime()
         if currentPhrase.isEmpty || now - lastPhraseUpdate > Double.random(in: 3.0...5.0) {
-            var next = localizedThinkingPhrases.randomElement() ?? "..."
+            var next = localizedThinkingPhrases.randomElement() ?? NSLocalizedString("thinking.fallback", comment: "")
             while next == currentPhrase && localizedThinkingPhrases.count > 1 {
-                next = localizedThinkingPhrases.randomElement() ?? "..."
+                next = localizedThinkingPhrases.randomElement() ?? NSLocalizedString("thinking.fallback", comment: "")
             }
             currentPhrase = next
             lastPhraseUpdate = now
@@ -540,7 +563,7 @@ class WalkerCharacter {
     func showCompletionBubble() {
         currentPhrase = localizedCompletionPhrases.randomElement() ?? "done!"
         showingCompletion = true
-        completionBubbleExpiry = CACurrentMediaTime() + 3.0
+        completionBubbleExpiry = CACurrentMediaTime() + Layout.completionBubbleDuration
         lastPhraseUpdate = 0
         phraseAnimating = false
         if !isIdleForPopover {
@@ -645,7 +668,7 @@ class WalkerCharacter {
         walkStartPixel = walkStartPos * currentTravelDistance
         walkEndPixel = walkEndPos * currentTravelDistance
 
-        let minSeparation: CGFloat = 0.12
+        let minSeparation = Layout.minSpacing
         if let siblings = controller?.characters {
             for sibling in siblings where sibling !== self {
                 let sibPos = sibling.positionProgress
@@ -669,7 +692,7 @@ class WalkerCharacter {
         isPaused = true
         queuePlayer.pause()
         queuePlayer.seek(to: .zero)
-        let delay = Double.random(in: 5.0...12.0)
+        let delay = Double.random(in: Layout.pauseRange)
         pauseEndTime = CACurrentMediaTime() + delay
     }
 
@@ -719,57 +742,68 @@ class WalkerCharacter {
     func update(dockX: CGFloat, dockWidth: CGFloat, dockTopY: CGFloat) {
         currentTravelDistance = max(dockWidth - displayWidth, 0)
         if isIdleForPopover {
-            let travelDistance = currentTravelDistance
-            let x = dockX + travelDistance * positionProgress + currentFlipCompensation
-            let bottomPadding = displayHeight * 0.15
-            let y = dockTopY - bottomPadding + yOffset
-            window.setFrameOrigin(NSPoint(x: x, y: y))
-            updatePopoverPosition()
-            updateThinkingBubble()
+            updateIdle(dockX: dockX, dockTopY: dockTopY)
             return
         }
 
         let now = CACurrentMediaTime()
 
         if isPaused {
-            if now >= pauseEndTime {
-                startWalk()
-            } else {
-                let travelDistance = max(dockWidth - displayWidth, 0)
-                let x = dockX + travelDistance * positionProgress + currentFlipCompensation
-                let bottomPadding = displayHeight * 0.15
-                let y = dockTopY - bottomPadding + yOffset
-                window.setFrameOrigin(NSPoint(x: x, y: y))
-                return
-            }
+            updatePaused(dockX: dockX, dockTopY: dockTopY, now: now)
         }
 
         if isWalking {
-            let elapsed = now - walkStartTime
-            let videoTime = min(elapsed, videoDuration)
-            let travelDistance = currentTravelDistance
-
-            // Interpolate in pixel space for consistent speed across screen changes
-            let walkNorm = elapsed >= videoDuration ? 1.0 : movementPosition(at: videoTime)
-            let currentPixel = walkStartPixel + (walkEndPixel - walkStartPixel) * walkNorm
-
-            // Convert pixel position back to progress for the current screen
-            if travelDistance > 0 {
-                positionProgress = min(max(currentPixel / travelDistance, 0), 1)
-            }
-
-            if elapsed >= videoDuration {
-                walkEndPos = positionProgress
-                enterPause()
-                return
-            }
-
-            let x = dockX + travelDistance * positionProgress + currentFlipCompensation
-            let bottomPadding = displayHeight * 0.15
-            let y = dockTopY - bottomPadding + yOffset
-            window.setFrameOrigin(NSPoint(x: x, y: y))
+            updateWalking(dockX: dockX, dockTopY: dockTopY, now: now)
         }
 
         updateThinkingBubble()
+    }
+
+    private func updateIdle(dockX: CGFloat, dockTopY: CGFloat) {
+        let travelDistance = currentTravelDistance
+        let x = dockX + travelDistance * positionProgress + currentFlipCompensation
+        let bottomPadding = displayHeight * Layout.bottomPaddingRatio
+        let y = dockTopY - bottomPadding + yOffset
+        window.setFrameOrigin(NSPoint(x: x, y: y))
+        updatePopoverPosition()
+        updateThinkingBubble()
+    }
+
+    private func updatePaused(dockX: CGFloat, dockTopY: CGFloat, now: CFTimeInterval) {
+        if now >= pauseEndTime {
+            startWalk()
+            return
+        }
+        let travelDistance = max(currentTravelDistance, 0)
+        let x = dockX + travelDistance * positionProgress + currentFlipCompensation
+        let bottomPadding = displayHeight * Layout.bottomPaddingRatio
+        let y = dockTopY - bottomPadding + yOffset
+        window.setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
+    private func updateWalking(dockX: CGFloat, dockTopY: CGFloat, now: CFTimeInterval) {
+        let elapsed = now - walkStartTime
+        let videoTime = min(elapsed, videoDuration)
+        let travelDistance = currentTravelDistance
+
+        // Interpolate in pixel space for consistent speed across screen changes
+        let walkNorm = elapsed >= videoDuration ? 1.0 : movementPosition(at: videoTime)
+        let currentPixel = walkStartPixel + (walkEndPixel - walkStartPixel) * walkNorm
+
+        // Convert pixel position back to progress for the current screen
+        if travelDistance > 0 {
+            positionProgress = min(max(currentPixel / travelDistance, 0), 1)
+        }
+
+        if elapsed >= videoDuration {
+            walkEndPos = positionProgress
+            enterPause()
+            return
+        }
+
+        let x = dockX + travelDistance * positionProgress + currentFlipCompensation
+        let bottomPadding = displayHeight * Layout.bottomPaddingRatio
+        let y = dockTopY - bottomPadding + yOffset
+        window.setFrameOrigin(NSPoint(x: x, y: y))
     }
 }

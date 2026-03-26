@@ -71,6 +71,22 @@
 "error.copilot.not_found" = "Copilot CLI not found.";
 "error.copilot.launch_failed" = "Failed to launch Copilot CLI";
 
+/* Onboarding greeting bubble */
+"onboarding.greeting" = "hi!";
+
+/* Terminal UI strings */
+"terminal.userPrefix" = "> ";
+"terminal.done" = "  DONE ";
+"terminal.fail" = "  FAIL ";
+
+/* Fallback phrases */
+"completion.fallback" = "done!";
+"thinking.fallback" = "...";
+
+/* Additional error messages */
+"error.codex.turn_failed" = "Turn failed";
+"error.unknown" = "Unknown error";
+
 /* Theme names */
 "theme.midnight" = "Midnight";
 "theme.peach" = "Peach";

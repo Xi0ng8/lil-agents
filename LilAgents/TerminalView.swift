@@ -178,7 +178,7 @@ class TerminalView: NSView {
         ensureNewline()
         let para = messageSpacing
         let attributed = NSMutableAttributedString()
-        attributed.append(NSAttributedString(string: "> ", attributes: [
+        attributed.append(NSAttributedString(string: NSLocalizedString("terminal.userPrefix", comment: ""), attributes: [
             .font: t.fontBold, .foregroundColor: t.accentColor, .paragraphStyle: para
         ]))
         attributed.append(NSAttributedString(string: "\(text)\n", attributes: [
@@ -231,7 +231,7 @@ class TerminalView: NSView {
     func appendToolResult(summary: String, isError: Bool) {
         let t = theme
         let color = isError ? t.errorColor : t.successColor
-        let prefix = isError ? "  FAIL " : "  DONE "
+        let prefix = isError ? NSLocalizedString("terminal.fail", comment: "") : NSLocalizedString("terminal.done", comment: "")
         let block = NSMutableAttributedString()
         block.append(NSAttributedString(string: prefix, attributes: [
             .font: t.fontBold, .foregroundColor: color

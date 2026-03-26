@@ -71,6 +71,22 @@
 "error.copilot.not_found" = "未找到 Copilot CLI。";
 "error.copilot.launch_failed" = "启动 Copilot CLI 失败";
 
+/* Onboarding greeting bubble */
+"onboarding.greeting" = "嗨！";
+
+/* Terminal UI strings */
+"terminal.userPrefix" = "> ";
+"terminal.done" = "  完成 ";
+"terminal.fail" = "  失败 ";
+
+/* Fallback phrases */
+"completion.fallback" = "完成！";
+"thinking.fallback" = "…";
+
+/* Additional error messages */
+"error.codex.turn_failed" = "执行失败";
+"error.unknown" = "未知错误";
+
 /* Theme names */
 "theme.midnight" = "午夜";
 "theme.peach" = "蜜桃";

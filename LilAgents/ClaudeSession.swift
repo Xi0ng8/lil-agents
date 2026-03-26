@@ -1,52 +1,31 @@
 import Foundation
 
-class ClaudeSession: AgentSession {
-    private var process: Process?
+class ClaudeSession: BaseAgentSession {
     private var inputPipe: Pipe?
-    private var outputPipe: Pipe?
-    private var errorPipe: Pipe?
-    private var lineBuffer = ""
-    private(set) var isRunning = false
-    private(set) var isBusy = false
-    private static var binaryPath: String?
 
-    var onText: ((String) -> Void)?
-    var onError: ((String) -> Void)?
-    var onToolUse: ((String, [String: Any]) -> Void)?
-    var onToolResult: ((String, Bool) -> Void)?
-    var onSessionReady: (() -> Void)?
-    var onTurnComplete: (() -> Void)?
-    var onProcessExit: (() -> Void)?
+    override func findBinaryName() -> String { "claude" }
 
-    var history: [AgentMessage] = []
-
-    // MARK: - Process Lifecycle
-
-    func start() {
-        if let cached = Self.binaryPath {
-            launchProcess(binaryPath: cached)
-            return
-        }
-
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        ShellEnvironment.findBinary(name: "claude", fallbackPaths: [
+    override func findBinaryFallbackPaths(home: String) -> [String] {
+        [
             "\(home)/.local/bin/claude",
             "\(home)/.claude/local/bin/claude",
             "/usr/local/bin/claude",
             "/opt/homebrew/bin/claude"
-        ]) { [weak self] path in
-            guard let self = self, let binaryPath = path else {
-                let msg = NSLocalizedString("error.claude.not_found", comment: "Claude CLI not found") + "\n\n\(AgentProvider.claude.installInstructions)"
-                self?.onError?(msg)
-                self?.history.append(AgentMessage(role: .error, text: msg))
-                return
-            }
-            Self.binaryPath = binaryPath
-            self.launchProcess(binaryPath: binaryPath)
-        }
+        ]
     }
 
-    private func launchProcess(binaryPath: String) {
+    override func findBinaryErrorKey() -> String { "error.claude.not_found" }
+
+    override func installInstructions() -> String { AgentProvider.claude.installInstructions }
+
+    // Claude is a long-running process — launch on start, not on each send
+    override func onBinaryFound() {
+        launchProcess()
+    }
+
+    private func launchProcess() {
+        guard let binaryPath = binaryPath else { return }
+
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: binaryPath)
         proc.arguments = [
@@ -60,55 +39,29 @@ class ClaudeSession: AgentSession {
         proc.environment = ShellEnvironment.processEnvironment()
 
         let inPipe = Pipe()
-        let outPipe = Pipe()
-        let errPipe = Pipe()
         proc.standardInput = inPipe
-        proc.standardOutput = outPipe
-        proc.standardError = errPipe
 
-        proc.terminationHandler = { [weak self] _ in
+        setupPipes(for: proc, terminationHandler: { [weak self] _ in
             DispatchQueue.main.async {
                 self?.isRunning = false
                 self?.isBusy = false
                 self?.onProcessExit?()
             }
-        }
-
-        outPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            if let text = String(data: data, encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self?.processOutput(text)
-                }
-            }
-        }
-
-        errPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            if let text = String(data: data, encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self?.onError?(text)
-                }
-            }
-        }
+        })
 
         do {
             try proc.run()
             process = proc
             inputPipe = inPipe
-            outputPipe = outPipe
-            errorPipe = errPipe
             isRunning = true
         } catch {
-            let msg = NSLocalizedString("error.claude.launch_failed", comment: "Failed to launch Claude CLI") + "\n\n\(AgentProvider.claude.installInstructions)\n\nError: \(error.localizedDescription)"
+            let msg = NSLocalizedString("error.claude.launch_failed", comment: "") + "\n\n\(AgentProvider.claude.installInstructions)\n\nError: \(error.localizedDescription)"
             onError?(msg)
             history.append(AgentMessage(role: .error, text: msg))
         }
     }
 
-    func send(message: String) {
+    override func send(message: String) {
         guard isRunning, let pipe = inputPipe else { return }
         isBusy = true
         history.append(AgentMessage(role: .user, text: message))
@@ -126,25 +79,14 @@ class ClaudeSession: AgentSession {
         pipe.fileHandleForWriting.write(line.data(using: .utf8)!)
     }
 
-    func terminate() {
-        process?.terminate()
-        isRunning = false
+    override func terminate() {
+        super.terminate()
+        inputPipe = nil
     }
 
     // MARK: - NDJSON Parsing
 
-    private func processOutput(_ text: String) {
-        lineBuffer += text
-        while let newlineRange = lineBuffer.range(of: "\n") {
-            let line = String(lineBuffer[lineBuffer.startIndex..<newlineRange.lowerBound])
-            lineBuffer = String(lineBuffer[newlineRange.upperBound...])
-            if !line.isEmpty {
-                parseLine(line)
-            }
-        }
-    }
-
-    private func parseLine(_ line: String) {
+    override func parseLine(_ line: String) {
         guard let data = line.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
 

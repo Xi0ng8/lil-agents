@@ -66,10 +66,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Theme submenu
         let themeItem = NSMenuItem(title: NSLocalizedString("menu.style", comment: ""), action: nil, keyEquivalent: "")
         let themeMenu = NSMenu()
+        let currentThemeIndex = PopoverTheme.allThemes.firstIndex(where: { $0.id == PopoverTheme.current.id }) ?? 0
         for (i, theme) in PopoverTheme.allThemes.enumerated() {
             let item = NSMenuItem(title: theme.name, action: #selector(switchTheme(_:)), keyEquivalent: "")
             item.tag = i
-            item.state = i == 0 ? .on : .off
+            item.state = i == currentThemeIndex ? .on : .off
             themeMenu.addItem(item)
         }
         themeItem.submenu = themeMenu
@@ -123,9 +124,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         controller?.characters.forEach { char in
             let wasOpen = char.isIdleForPopover
+            let wasBubbleVisible = char.thinkingBubbleWindow?.isVisible ?? false
             if wasOpen { char.popoverWindow?.orderOut(nil) }
             char.popoverWindow = nil
             char.terminalView = nil
+            char.thinkingBubbleWindow?.orderOut(nil)
             char.thinkingBubbleWindow = nil
             if wasOpen {
                 char.createPopoverWindow()
@@ -138,6 +141,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 if let terminal = char.terminalView {
                     char.popoverWindow?.makeFirstResponder(terminal.inputField)
                 }
+            }
+            if wasBubbleVisible {
+                char.updateThinkingPhrase()
+                char.showBubble(text: char.currentPhrase, isCompletion: false)
             }
         }
     }
@@ -190,6 +197,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             sender.state = .off
         } else {
             char.window.orderFrontRegardless()
+            char.queuePlayer.play()
             sender.state = .on
         }
     }
@@ -203,6 +211,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             sender.state = .off
         } else {
             char.window.orderFrontRegardless()
+            char.queuePlayer.play()
             sender.state = .on
         }
     }

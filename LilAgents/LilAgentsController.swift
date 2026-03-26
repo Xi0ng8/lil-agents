@@ -54,10 +54,10 @@ class LilAgentsController {
         bruce.isOnboarding = true
         // Show "hi!" bubble after a short delay so the character is visible first
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            bruce.currentPhrase = "hi!"
+            bruce.currentPhrase = NSLocalizedString("onboarding.greeting", comment: "")
             bruce.showingCompletion = true
             bruce.completionBubbleExpiry = CACurrentMediaTime() + 600 // stays until clicked
-            bruce.showBubble(text: "hi!", isCompletion: true)
+            bruce.showBubble(text: NSLocalizedString("onboarding.greeting", comment: ""), isCompletion: true)
             bruce.playCompletionSound()
         }
     }
