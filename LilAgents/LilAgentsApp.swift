@@ -15,16 +15,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var controller: LilAgentsController?
     var statusItem: NSStatusItem?
     let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    private var displayChangeMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         controller = LilAgentsController()
         controller?.start()
         setupMenuBar()
+        setupDisplayChangeMonitor()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         controller?.characters.forEach { $0.session?.terminate() }
+        if let monitor = displayChangeMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
     }
 
     // MARK: - Menu Bar
@@ -36,7 +41,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
+        buildCharacterMenuItems(menu)
+        buildOptionsSubmenus(menu)
+        buildUpdateAndQuitItems(menu)
+        statusItem?.menu = menu
+    }
 
+    private func buildCharacterMenuItems(_ menu: NSMenu) {
         let char1Item = NSMenuItem(title: NSLocalizedString("menu.bruce", comment: ""), action: #selector(toggleChar1), keyEquivalent: "1")
         char1Item.state = .on
         menu.addItem(char1Item)
@@ -46,13 +57,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(char2Item)
 
         menu.addItem(NSMenuItem.separator())
+    }
 
+    private func buildOptionsSubmenus(_ menu: NSMenu) {
+        // Sounds
         let soundItem = NSMenuItem(title: NSLocalizedString("menu.sounds", comment: ""), action: #selector(toggleSounds(_:)), keyEquivalent: "")
-        soundItem.state = .on
+        soundItem.state = WalkerCharacter.soundsEnabled ? .on : .off
         menu.addItem(soundItem)
 
         // Provider submenu
         let providerItem = NSMenuItem(title: NSLocalizedString("menu.provider", comment: ""), action: nil, keyEquivalent: "")
+        providerItem.submenu = buildProviderSubmenu()
+        menu.addItem(providerItem)
+
+        // Theme submenu
+        let themeItem = NSMenuItem(title: NSLocalizedString("menu.style", comment: ""), action: nil, keyEquivalent: "")
+        themeItem.submenu = buildThemeSubmenu()
+        menu.addItem(themeItem)
+
+        // Display submenu
+        let displayItem = NSMenuItem(title: NSLocalizedString("menu.display", comment: ""), action: nil, keyEquivalent: "")
+        displayItem.submenu = buildDisplaySubmenu()
+        menu.addItem(displayItem)
+
+        menu.addItem(NSMenuItem.separator())
+    }
+
+    private func buildProviderSubmenu() -> NSMenu {
         let providerMenu = NSMenu()
         for (i, provider) in AgentProvider.allCases.enumerated() {
             let item = NSMenuItem(title: provider.displayName, action: #selector(switchProvider(_:)), keyEquivalent: "")
@@ -60,11 +91,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             item.state = provider == AgentProvider.current ? .on : .off
             providerMenu.addItem(item)
         }
-        providerItem.submenu = providerMenu
-        menu.addItem(providerItem)
+        return providerMenu
+    }
 
-        // Theme submenu
-        let themeItem = NSMenuItem(title: NSLocalizedString("menu.style", comment: ""), action: nil, keyEquivalent: "")
+    private func buildThemeSubmenu() -> NSMenu {
         let themeMenu = NSMenu()
         let currentThemeIndex = PopoverTheme.allThemes.firstIndex(where: { $0.id == PopoverTheme.current.id }) ?? 0
         for (i, theme) in PopoverTheme.allThemes.enumerated() {
@@ -73,30 +103,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             item.state = i == currentThemeIndex ? .on : .off
             themeMenu.addItem(item)
         }
-        themeItem.submenu = themeMenu
-        menu.addItem(themeItem)
+        return themeMenu
+    }
 
-        // Display submenu
-        let displayItem = NSMenuItem(title: NSLocalizedString("menu.display", comment: ""), action: nil, keyEquivalent: "")
+    private func buildDisplaySubmenu() -> NSMenu {
         let displayMenu = NSMenu()
         displayMenu.delegate = self
         let autoItem = NSMenuItem(title: NSLocalizedString("menu.autoMainDisplay", comment: ""), action: #selector(switchDisplay(_:)), keyEquivalent: "")
         autoItem.tag = -1
-        autoItem.state = .on
+        autoItem.state = controller?.pinnedScreenIndex == -1 ? .on : .off
         displayMenu.addItem(autoItem)
         displayMenu.addItem(NSMenuItem.separator())
         for (i, screen) in NSScreen.screens.enumerated() {
             let name = screen.localizedName
             let item = NSMenuItem(title: name, action: #selector(switchDisplay(_:)), keyEquivalent: "")
             item.tag = i
-            item.state = .off
+            item.state = controller?.pinnedScreenIndex == i ? .on : .off
             displayMenu.addItem(item)
         }
-        displayItem.submenu = displayMenu
-        menu.addItem(displayItem)
+        return displayMenu
+    }
 
-        menu.addItem(NSMenuItem.separator())
-
+    private func buildUpdateAndQuitItems(_ menu: NSMenu) {
         let updateItem = NSMenuItem(title: NSLocalizedString("menu.checkForUpdates", comment: ""), action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
         updateItem.target = updaterController
         menu.addItem(updateItem)
@@ -105,8 +133,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let quitItem = NSMenuItem(title: NSLocalizedString("menu.quit", comment: ""), action: #selector(quitApp), keyEquivalent: "q")
         menu.addItem(quitItem)
+    }
 
-        statusItem?.menu = menu
+    // MARK: - Display Change Monitor
+
+    private func setupDisplayChangeMonitor() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(displayConfigurationChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    @objc private func displayConfigurationChanged() {
+        // Refresh display submenu if needed
+        if let menu = statusItem?.menu,
+           let displayItem = menu.items.first(where: { $0.title == NSLocalizedString("menu.display", comment: "") }) {
+            displayItem.submenu = buildDisplaySubmenu()
+        }
     }
 
     // MARK: - Menu Actions
@@ -180,6 +225,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func switchDisplay(_ sender: NSMenuItem) {
         let idx = sender.tag
         controller?.pinnedScreenIndex = idx
+
+        if let displayMenu = sender.menu {
+            for item in displayMenu.items {
+                item.state = item.tag == idx ? .on : .off
+            }
+        }
     }
 
     @objc func toggleChar1(_ sender: NSMenuItem) {

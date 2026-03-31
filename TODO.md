@@ -2,6 +2,11 @@
 
 ## P0 — 关键 Bug 修复
 
+- [x] **P0-0**: 国际化基础架构（中英文）
+  - 新增 `en.lproj/Localizable.strings` 和 `zh-Hans.lproj/Localizable.strings`
+  - 修改所有 Swift 文件使用 `NSLocalizedString`
+  - 支持系统语言自动切换
+
 - [x] **P0-1**: `ClaudeSession.terminate()` 未清理 `readabilityHandler`，可能导致回调泄漏
   - 文件: `LilAgents/ClaudeSession.swift`
   - 方案: terminate() 中调用 super.terminate() 清理 readabilityHandler
